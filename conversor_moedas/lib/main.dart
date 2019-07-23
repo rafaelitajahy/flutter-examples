@@ -11,10 +11,7 @@ void main() async {
   runApp(MaterialApp(
     debugShowCheckedModeBanner: false,
     home: ConversorMoedas(),
-    theme: ThemeData(
-      hintColor: Colors.amber,
-      primaryColor: Colors.white
-    ),
+    theme: ThemeData(hintColor: Colors.amber, primaryColor: Colors.white),
   ));
 }
 
@@ -29,9 +26,51 @@ class ConversorMoedas extends StatefulWidget {
 }
 
 class _ConversorMoedasState extends State<ConversorMoedas> {
+  final realController = TextEditingController();
+  final dolarController = TextEditingController();
+  final euroController = TextEditingController();
 
   double dolar;
   double euro;
+
+  void _realChanged(String text) {
+    if (text.isEmpty) {
+      _clearAll();
+      return;
+    }
+
+    double real = double.parse(text);
+    dolarController.text = (real / dolar).toStringAsFixed(2);
+    euroController.text = (real / euro).toStringAsFixed(2);
+  }
+
+  void _dolarChanged(String text) {
+    if (text.isEmpty) {
+      _clearAll();
+      return;
+    }
+
+    double dolar = double.parse(text);
+    realController.text = (dolar * this.dolar).toStringAsFixed(2);
+    euroController.text = (dolar * this.dolar / this.euro).toStringAsFixed(2);
+  }
+
+  void _euroChanged(String text) {
+    if (text.isEmpty) {
+      _clearAll();
+      return;
+    }
+
+    double euro = double.parse(text);
+    realController.text = (euro * this.euro).toStringAsFixed(2);
+    dolarController.text = (euro * this.euro / this.dolar).toStringAsFixed(2);
+  }
+
+  void _clearAll() {
+    realController.text = '';
+    dolarController.text = '';
+    euroController.text = '';
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -41,6 +80,12 @@ class _ConversorMoedasState extends State<ConversorMoedas> {
         title: Text('\$ Concersor \$'),
         backgroundColor: Colors.amber,
         centerTitle: true,
+        actions: <Widget>[
+          IconButton(
+            icon: Icon(Icons.refresh),
+            onPressed: _clearAll,
+          )
+        ],
       ),
       body: FutureBuilder<Map>(
         future: getData(),
@@ -72,49 +117,38 @@ class _ConversorMoedasState extends State<ConversorMoedas> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: <Widget>[
-                      Icon(Icons.monetization_on, size: 150.0, color: Colors.amber,),
-                      TextField(
-                        decoration: InputDecoration(
-                          labelText: 'Real',
-                          labelStyle: TextStyle(color: Colors.amber),
-                          enabledBorder: OutlineInputBorder(
-                            borderSide: BorderSide(color: Theme.of(context).hintColor)
-                          ),
-                          prefixText: 'R\$'
-                        ),
-                        style: TextStyle(
-                          color: Colors.amber, fontSize: 25.0
-                        ),
+                      Icon(
+                        Icons.monetization_on,
+                        size: 150.0,
+                        color: Colors.amber,
                       ),
+                      buildTextField('Real', 'R\$', Theme.of(context).hintColor,
+                          realController, _realChanged),
                       Divider(),
-                      TextField(
-                        decoration: InputDecoration(
-                          labelText: 'Dólar',
-                          labelStyle: TextStyle(color: Colors.amber),
-                          enabledBorder: OutlineInputBorder(
-                            borderSide: BorderSide(color: Theme.of(context).hintColor)
-                          ),
-                          prefixText: 'US\$'
-                        ),
-                        style: TextStyle(
-                          color: Colors.amber, fontSize: 25.0
-                        ),
-                      ),
+                      buildTextField('Dólar', '\$', Theme.of(context).hintColor,
+                          dolarController, _dolarChanged),
                       Divider(),
-                      TextField(
-                        decoration: InputDecoration(
-                          labelText: 'Euro',
-                          labelStyle: TextStyle(color: Colors.amber),
-                          enabledBorder: OutlineInputBorder(
-                            borderSide: BorderSide(color: Theme.of(context).hintColor)
-                          ),
-                          prefixText: '€\$'
+                      buildTextField('Euro', '€', Theme.of(context).hintColor,
+                          euroController, _euroChanged),
+                      Padding(
+                        padding: EdgeInsets.all(10.0),
+                        child: Row(
+                          children: <Widget>[
+                            Text(
+                              ' Dólar: $dolar',
+                              style: TextStyle(
+                                  color: Colors.amber, fontSize: 20.0),
+                            ),
+                            Text(
+                              '   Euro: $euro',
+                              style: TextStyle(
+                                  color: Colors.amber, fontSize: 20.0),
+                            ),
+                          ],
                         ),
-                        style: TextStyle(
-                          color: Colors.amber, fontSize: 25.0
-                        ),
-                      ),                                            
-                    ],),
+                      )
+                    ],
+                  ),
                 );
               }
           }
@@ -122,4 +156,19 @@ class _ConversorMoedasState extends State<ConversorMoedas> {
       ),
     );
   }
+}
+
+Widget buildTextField(String label, String prefix, Color color,
+    TextEditingController controller, Function changed) {
+  return TextField(
+    decoration: InputDecoration(
+        labelText: label,
+        labelStyle: TextStyle(color: Colors.amber),
+        enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: color)),
+        prefixText: prefix),
+    style: TextStyle(color: Colors.amber, fontSize: 25.0),
+    controller: controller,
+    onChanged: changed,
+    keyboardType: TextInputType.numberWithOptions(decimal: true),
+  );
 }
